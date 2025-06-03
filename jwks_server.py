@@ -10,15 +10,26 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file if it exists
-load_dotenv()
+# Only load .env file if we're not in production (Render)
+if not os.environ.get("RENDER"):
+    print("Development environment detected, loading .env file")
+    load_dotenv()
+else:
+    print(
+        "Production environment (Render) detected, using Render environment variables"
+    )
 
 app = FastAPI(title="JWKS Server", description="Serves JWK Set for Epic FHIR OAuth2")
 
 # Configuration
+# In production (Render), this will use the value from render.yaml
+# In development, it will use the value from .env
 KEY_DIR = os.environ.get("KEY_DIR", "keys")
 PUBLIC_KEY_FILE = os.path.join(KEY_DIR, "publickey509.pem")
 
+print(
+    f"Environment: {'Production (Render)' if os.environ.get('RENDER') else 'Development'}"
+)
 print(f"Using key directory: {KEY_DIR}")
 print(f"Looking for public key at: {PUBLIC_KEY_FILE}")
 
