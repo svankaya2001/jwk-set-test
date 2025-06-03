@@ -4,8 +4,14 @@ services:
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: python jwks_server.py
+    disk:
+      name: jwks-public-key
+      mountPath: /opt/keys
+      sizeGB: 1
     envVars:
       - key: RENDER
         value: "true"
       - key: PYTHON_VERSION
-        value: "3.10.0" 
+        value: "3.10.0"
+      - key: KEY_DIR
+        value: "/opt/keys" 

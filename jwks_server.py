@@ -4,17 +4,39 @@ from jose import jwk
 from jose.utils import base64url_encode
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography import x509
 import json
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if it exists
+load_dotenv()
 
 app = FastAPI(title="JWKS Server", description="Serves JWK Set for Epic FHIR OAuth2")
 
+# Configuration
+KEY_DIR = os.environ.get("KEY_DIR", "keys")
+PUBLIC_KEY_FILE = os.path.join(KEY_DIR, "publickey509.pem")
 
-# Generate or load your RSA key pair
-# In production, you should load your existing key pair
-def generate_key_pair():
-    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    return private_key
+print(f"Using key directory: {KEY_DIR}")
+print(f"Looking for public key at: {PUBLIC_KEY_FILE}")
+
+
+def load_public_key():
+    """Load RSA public key from X.509 certificate"""
+    try:
+        # Try to load existing X.509 certificate
+        with open(PUBLIC_KEY_FILE, "rb") as f:
+            cert = x509.load_pem_x509_certificate(f.read())
+            public_key = cert.public_key()
+        print("Loaded RSA public key from X.509 certificate")
+        return public_key
+    except (FileNotFoundError, ValueError) as e:
+        raise RuntimeError(
+            f"X.509 certificate not found at {PUBLIC_KEY_FILE} or invalid format. "
+            "Please ensure your X.509 certificate is in PEM format and placed in the correct location."
+        )
 
 
 # Convert RSA public key to JWK format
@@ -35,9 +57,8 @@ def create_jwk(public_key):
     return jwk_dict
 
 
-# Generate or load key pair
-private_key = generate_key_pair()
-public_key = private_key.public_key()
+# Load public key
+public_key = load_public_key()
 
 # Create JWK from public key
 jwk_dict = create_jwk(public_key)
