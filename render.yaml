@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: jwks-server
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python jwks_server.py
+    envVars:
+      - key: RENDER
+        value: "true"
+      - key: PYTHON_VERSION
+        value: "3.10.0" 
